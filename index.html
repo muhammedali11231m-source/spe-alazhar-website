@@ -6,22 +6,17 @@
 <title>SPE Al-Azhar International Student Chapter</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
 
-<!-- React CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
-<!-- Firebase CDN (All Compat including Storage) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
 <style>
 /* ============================================================
    DESIGN SYSTEM — SPE Al-Azhar 26/27 Season
-   Color Palette: From "الوان.jpeg" — Deep Navy + Electric Cyan
-   + Gold Accent for 26/27 Branding
    ============================================================ */
 :root {
   --navy:      #030C1E;
@@ -326,7 +321,7 @@ footer{background:var(--navy2);padding:72px 52px 34px;}
 .empty-state .ei{font-size:50px;margin-bottom:12px;opacity:.22;}
 .empty-state p{font-size:15px;}
 
-/* ---- CUSTOM MODAL STYLES (No alerts!) ---- */
+/* ---- CUSTOM MODAL STYLES ---- */
 .custom-modal-overlay {
   position: fixed;
   inset: 0;
@@ -463,17 +458,60 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
-const storage = firebase.storage(); // Initialized Storage for Device Uploads
 </script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── IMGBB API KEY ───────────────────────────────────────────────────────────
+const IMGBB_API_KEY = "b840e08c972172483799896d13ab3859";
 
 // ─── LOGO ────────────────────────────────────────────────────────────────────
 const LOGO_URI ="logo.jpg";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+const uploadToImgBB = async (file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+    method: 'POST',
+    body: formData
+  });
+  
+  const data = await res.json();
+  if (data.success) {
+    return data.data.url;
+  } else {
+    throw new Error(data.error?.message || 'Failed to upload image to ImgBB');
+  }
+};
+
+// ─── SMART MEDIA RENDERER (Images + YouTube/Videos) ──────────────────────────
+function EventMedia({ ev }) {
+  if (ev.mediaType === 'video' && ev.videoUrl) {
+    // Check if it's a YouTube link to embed it beautifully
+    const ytMatch = ev.videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})/);
+    if (ytMatch && ytMatch[1]) {
+      return (
+        <iframe className="event-card-img" 
+                src={`https://www.youtube.com/embed/${ytMatch[1]}`} 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen 
+                style={{objectFit:'cover', border:'none'}}/>
+      );
+    }
+    // Standard video tag for direct .mp4 links
+    return <video className="event-card-img" src={ev.videoUrl} controls muted style={{objectFit:'cover'}} />;
+  } else if (ev.imageUrl) {
+    return <img className="event-card-img" src={ev.imageUrl} alt={ev.title} onError={e=>e.target.style.display='none'}/>;
+  } else {
+    return <div className="event-card-img-placeholder">📅</div>;
+  }
+}
 
 // ─── PARTICLES ───────────────────────────────────────────────────────────────
 function Particles(){
@@ -670,14 +708,7 @@ function HomePage({ go, stats, boardMembers, events, showModal }){
             <div className="events-grid">
               {upcomingEvents.map(ev=>(
                 <div className="event-card" key={ev.id}>
-                  {/* VIDEO OR IMAGE RENDERER */}
-                  {ev.mediaType === 'video' && ev.videoUrl ? (
-                    <video className="event-card-img" src={ev.videoUrl} controls muted style={{objectFit:'cover'}} />
-                  ) : ev.imageUrl ? (
-                    <img className="event-card-img" src={ev.imageUrl} alt={ev.title} onError={e=>e.target.style.display='none'}/>
-                  ) : (
-                    <div className="event-card-img-placeholder">📅</div>
-                  )}
+                  <EventMedia ev={ev} />
                   <div className="event-card-body">
                     <div className="event-card-type">{ev.type || 'Event'}</div>
                     <h3>{ev.title}</h3>
@@ -897,14 +928,7 @@ function EventsPage({ go, events }){
             : <div className="events-grid">
                 {events.map(ev=>(
                   <div className="event-card" key={ev.id}>
-                    {/* VIDEO OR IMAGE RENDERER */}
-                    {ev.mediaType === 'video' && ev.videoUrl ? (
-                      <video className="event-card-img" src={ev.videoUrl} controls muted style={{objectFit:'cover'}} />
-                    ) : ev.imageUrl ? (
-                      <img className="event-card-img" src={ev.imageUrl} alt={ev.title} onError={e=>e.target.style.display='none'}/>
-                    ) : (
-                      <div className="event-card-img-placeholder">📅</div>
-                    )}
+                    <EventMedia ev={ev} />
                     <div className="event-card-body">
                       <div className="event-card-type">{ev.type || 'Event'}</div>
                       <h3>{ev.title}</h3>
@@ -1065,72 +1089,18 @@ function AdminPanel({ onLogout, showModal, showConfirm }){
   return ()=>{ unsubBoard(); unsubEvents(); };
 },[]);
 
-// Helper functions to compress images client-side and bypass Storage CORS blockages
-const compressImageToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const max_size = 600; // Ideal resolution for sharp but extremely lightweight photos
 
-        if (width > height) {
-          if (width > max_size) {
-            height *= max_size / width;
-            width = max_size;
-          }
-        } else {
-          if (height > max_size) {
-            width *= max_size / height;
-            height = max_size;
-          }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Output as jpeg with 0.6 quality (highly compressed, ~20-40KB)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-        resolve(compressedBase64);
-      };
-      img.onerror = () => reject(new Error("Invalid image format."));
-      img.src = event.target.result;
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
-};
-
-const compressVideoToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    if (file.size > 900 * 1024) { // Firestore limit is 1MB, we keep it safe under 900KB
-      reject(new Error("Video must be under 900KB. For larger files, please use YouTube or Google Drive links."));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      resolve(event.target.result);
-    };
-    reader.onerror = (err) => reject(err);
-    reader.readAsDataURL(file);
-  });
-};
-
-// Device File Upload Handlers (Now powered by local Base64 rendering to bypass CORS)
+// Device File Upload Handlers (Powered by ImgBB)
 const handleBoardPhotoUpload = async (e) => {
   const file = e.target.files[0];
   if(!file) return;
   setBUploading(true);
   try {
-    const compressedUrl = await compressImageToBase64(file);
-    setBForm(prev => ({ ...prev, imageUrl: compressedUrl }));
-    ok('✓ Image processed instantly!');
+    const downloadUrl = await uploadToImgBB(file);
+    setBForm(prev => ({ ...prev, imageUrl: downloadUrl }));
+    ok('✓ Image uploaded to ImgBB successfully!');
   } catch(err) {
-    showModal('Error: ' + err.message, 'error');
+    showModal('Upload Error: ' + err.message, 'error');
   } finally {
     setBUploading(false);
   }
@@ -1139,19 +1109,20 @@ const handleBoardPhotoUpload = async (e) => {
 const handleEventMediaUpload = async (e, mediaType) => {
   const file = e.target.files[0];
   if(!file) return;
+  
+  if (mediaType === 'video') {
+    showModal('نظراً لحجم الفيديوهات الكبير، الاستضافة المجانية للصور لا تدعمها. يرجى رفع الفيديو على يوتيوب أو جوجل درايف، ثم وضع الرابط في المربع المخصص بالأسفل.', 'info');
+    e.target.value = null; // reset input
+    return;
+  }
+
   setEUploading(true);
   try {
-    if(mediaType === 'video') {
-      const videoBase64 = await compressVideoToBase64(file);
-      setEForm(prev => ({ ...prev, videoUrl: videoBase64, mediaType: 'video' }));
-      ok('✓ Video processed instantly!');
-    } else {
-      const imageBase64 = await compressImageToBase64(file);
-      setEForm(prev => ({ ...prev, imageUrl: imageBase64, mediaType: 'image' }));
-      ok('✓ Image processed instantly!');
-    }
+    const downloadUrl = await uploadToImgBB(file);
+    setEForm(prev => ({ ...prev, imageUrl: downloadUrl, mediaType: 'image' }));
+    ok('✓ Image uploaded to ImgBB successfully!');
   } catch(err) {
-    showModal('Error: ' + err.message, 'error');
+    showModal('Upload Error: ' + err.message, 'error');
   } finally {
     setEUploading(false);
   }
@@ -1248,7 +1219,7 @@ const addBoardMember = async () => {
                     <div className="file-upload-box">
                       <span className="file-upload-icon">📷</span>
                       <span className="file-upload-text">
-                        {bUploading ? 'Uploading...' : <span>Drag/Drop or <strong>Browse</strong></span>}
+                        {bUploading ? 'Uploading to ImgBB...' : <span>Drag/Drop or <strong>Browse</strong></span>}
                       </span>
                       <input type="file" accept="image/*" onChange={handleBoardPhotoUpload} disabled={bUploading} />
                     </div>
@@ -1307,19 +1278,19 @@ const addBoardMember = async () => {
                     <label>Media Type</label>
                     <select value={eForm.mediaType} onChange={e=>setEForm(x=>({...x,mediaType:e.target.value}))}>
                       <option value="image">📸 Image (Photo)</option>
-                      <option value="video">🎥 Video (MP4/WebM)</option>
+                      <option value="video">🎥 Video (YouTube / Link)</option>
                     </select>
                   </div>
                   
                   {eForm.mediaType === 'video' ? (
                     <div className="f-g">
-                      <label>Upload Video from Device</label>
-                      <div className="file-upload-box">
-                        <span className="file-upload-icon">🎬</span>
+                      <label>Video Upload Notice</label>
+                      <div className="file-upload-box" style={{cursor:'default'}}>
+                        <span className="file-upload-icon" style={{color:'var(--gold)'}}>🎥</span>
                         <span className="file-upload-text">
-                          {eUploading ? 'Uploading Video...' : <span>Drop video or <strong>Browse</strong></span>}
+                          Please host videos on <strong>YouTube</strong> or <strong>Google Drive</strong>.<br/>
+                          Then paste the link in the <strong>Video URL</strong> box below.
                         </span>
-                        <input type="file" accept="video/*" onChange={(e) => handleEventMediaUpload(e, 'video')} disabled={eUploading} />
                       </div>
                     </div>
                   ) : (
@@ -1328,7 +1299,7 @@ const addBoardMember = async () => {
                       <div className="file-upload-box">
                         <span className="file-upload-icon">🖼️</span>
                         <span className="file-upload-text">
-                          {eUploading ? 'Uploading Image...' : <span>Drop image or <strong>Browse</strong></span>}
+                          {eUploading ? 'Uploading to ImgBB...' : <span>Drop image or <strong>Browse</strong></span>}
                         </span>
                         <input type="file" accept="image/*" onChange={(e) => handleEventMediaUpload(e, 'image')} disabled={eUploading} />
                       </div>
@@ -1339,11 +1310,11 @@ const addBoardMember = async () => {
                 <div className="f-row">
                   <div className="f-g">
                     <label>Cover Image URL (Fallback)</label>
-                    <input value={eForm.imageUrl} onChange={e=>setEForm(x=>({...x,imageUrl:e.target.value}))} placeholder="https://example.com/event.jpg"/>
+                    <input value={eForm.imageUrl} onChange={e=>setEForm(x=>({...x,imageUrl:e.target.value}))} placeholder="https://example.com/event.jpg" disabled={eForm.mediaType === 'video'}/>
                   </div>
                   <div className="f-g">
-                    <label>Video URL (Fallback)</label>
-                    <input value={eForm.videoUrl} onChange={e=>setEForm(x=>({...x,videoUrl:e.target.value}))} placeholder="https://example.com/video.mp4"/>
+                    <label>Video URL (YouTube or Drive Link)</label>
+                    <input value={eForm.videoUrl} onChange={e=>setEForm(x=>({...x,videoUrl:e.target.value}))} placeholder="https://youtube.com/watch?v=..." disabled={eForm.mediaType === 'image'}/>
                   </div>
                 </div>
 
@@ -1423,7 +1394,7 @@ function App(){
   const [events, setEvents] = useState([]);
   const [stats, setStats] = useState({founded:'2005',awards:'7+',rank:'1st',global:'Top 5%'});
 
-  // Custom Modal System (Safe inside iframes)
+  // Custom Modal System
   const [modalState, setModalState] = useState({ show: false, text: '', type: 'info', onConfirm: null });
 
   const showModal = (text, type = 'info') => {
