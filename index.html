@@ -326,51 +326,6 @@ footer{background:var(--navy2);padding:72px 52px 34px;}
 .empty-state .ei{font-size:50px;margin-bottom:12px;opacity:.22;}
 .empty-state p{font-size:15px;}
 
-/* ---- CUSTOM MODAL STYLES (No alerts!) ---- */
-.custom-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(3, 12, 30, 0.85);
-  backdrop-filter: blur(8px);
-  z-index: 10001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.custom-modal-box {
-  background: var(--navy2);
-  border: 1.5px solid var(--border);
-  box-shadow: var(--glow2);
-  border-radius: 8px;
-  width: 100%;
-  max-width: 440px;
-  padding: 32px;
-  text-align: center;
-  animation: pgIn 0.3s cubic-bezier(.25,.46,.45,.94);
-}
-.custom-modal-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-.custom-modal-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-.custom-modal-text {
-  color: var(--dim);
-  font-size: 14.5px;
-  line-height: 1.6;
-  margin-bottom: 24px;
-}
-.custom-modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
 /* ---- NEW DRAG & DROP / FILE UPLOAD BUTTONS ---- */
 .file-upload-wrapper {
   display: flex;
@@ -502,7 +457,7 @@ function Nav({ page, go, user, onLogout, sc, mob, setMob }){
   return (
     <nav className={`nav${sc||page!=='home'?' solid':''}`}>
       <div className="nav-brand" onClick={()=>go('home')}>
-        <img src={logo.jpg} className="nav-logo-img" alt="SPE Al-Azhar"/>
+        <img src={LOGO_URI} className="nav-logo-img" alt="SPE Al-Azhar"/>
         <div className="nav-brand-text">
           <div className="top">SPE AL-AZHAR</div>
           <div className="bot">International Student Chapter</div>
@@ -534,7 +489,7 @@ function Nav({ page, go, user, onLogout, sc, mob, setMob }){
 }
 
 // ─── HOME PAGE ────────────────────────────────────────────────────────────────
-function HomePage({ go, stats, boardMembers, events, showModal }){
+function HomePage({ go, stats, boardMembers, events }){
   const displayStats = [
     { n: stats?.founded || '2005', l: 'Founded' },
     { n: stats?.awards || '7+', l: 'Outstanding Awards' },
@@ -561,7 +516,7 @@ function HomePage({ go, stats, boardMembers, events, showModal }){
           <div className="hero-logo-wrap">
             <div className="hero-logo-ring"/>
             <div className="hero-logo-ring2"/>
-            <img src={logo.jpg} className="hero-logo-img" alt="SPE Al-Azhar Logo"/>
+            <img src={LOGO_URI} className="hero-logo-img" alt="SPE Al-Azhar Logo"/>
           </div>
           <div className="hero-text">
             <div className="hero-pill">⚡ Season 26/27 — Cairo, Egypt</div>
@@ -595,7 +550,7 @@ function HomePage({ go, stats, boardMembers, events, showModal }){
         <div className="about-grid">
           <div className="about-visual">
             <div className="about-vis-inner">
-              <img src={logo.jpg} className="about-vis-logo" alt="Logo"/>
+              <img src={LOGO_URI} className="about-vis-logo" alt="Logo"/>
             </div>
           </div>
           <div className="about-content">
@@ -720,7 +675,7 @@ function HomePage({ go, stats, boardMembers, events, showModal }){
       </section>
 
       {/* NEWSLETTER */}
-      <NLSection showModal={showModal} />
+      <NLSection/>
 
       {/* FOOTER */}
       <SiteFooter go={go}/>
@@ -928,7 +883,7 @@ function EventsPage({ go, events }){
 }
 
 // ─── NEWSLETTER SECTION ───────────────────────────────────────────────────────
-function NLSection({ showModal }){
+function NLSection(){
   const [nl, setNl] = useState('');
   return (
     <section className="nl-sec">
@@ -937,7 +892,7 @@ function NLSection({ showModal }){
       <p>Don't miss our future events, news, and achievements.</p>
       <div className="nl-form">
         <input value={nl} onChange={e=>setNl(e.target.value)} placeholder="Your email address"/>
-        <button onClick={()=>{if(nl.includes('@')){showModal('Thank you for subscribing!', 'success');setNl('');}else showModal('Please enter a valid email address.', 'error');}}>Subscribe</button>
+        <button onClick={()=>{if(nl.includes('@')){alert('Thank you for subscribing!');setNl('');}else alert('Enter a valid email.');}}>Subscribe</button>
       </div>
     </section>
   );
@@ -950,7 +905,7 @@ function SiteFooter({ go }){
       <div className="ft-top">
         <div className="ft-brand">
           <div className="ft-logo-wrap">
-            <img src={logo} className="ft-logo-img" alt="SPE Logo"/>
+            <img src={LOGO_URI} className="ft-logo-img" alt="SPE Logo"/>
             <span style={{fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:800,letterSpacing:1}}>SPE <span style={{color:'var(--gold)'}}>AUSC</span></span>
           </div>
           <p>Society of Petroleum Engineer Al-Azhar University Student Chapter — one of the most impactful student activities worldwide since 2005.</p>
@@ -1020,7 +975,7 @@ function AdminLoginPage({ onLogin }){
 }
 
 // ─── ADMIN PANEL PAGE ─────────────────────────────────────────────────────────
-function AdminPanel({ onLogout, showModal, showConfirm }){
+function AdminPanel({ onLogout }){
   const [tab, setTab] = useState('board');
   const [suc, setSuc] = useState('');
   const sucTimer = useRef(null);
@@ -1029,7 +984,6 @@ function AdminPanel({ onLogout, showModal, showConfirm }){
     sucTimer.current = setTimeout(()=>setSuc(''), 3500);
   };
 
-  // State & Variables
   const [boardMembers, setBoardMembers] = useState([]);
   const [bLoading, setBLoading] = useState(true);
   const [bForm, setBForm] = useState({name:'',role:'',imageUrl:'',bio:''});
@@ -1077,7 +1031,7 @@ function AdminPanel({ onLogout, showModal, showConfirm }){
       setBForm(prev => ({ ...prev, imageUrl: url }));
       ok('✓ Image uploaded to storage!');
     } catch(err) {
-      showModal('Failed to upload: ' + err.message, 'error');
+      alert('Failed to upload: ' + err.message);
     } finally {
       setBUploading(false);
     }
@@ -1100,46 +1054,42 @@ function AdminPanel({ onLogout, showModal, showConfirm }){
         ok('✓ Image uploaded to storage!');
       }
     } catch(err) {
-      showModal('Failed to upload: ' + err.message, 'error');
+      alert('Failed to upload: ' + err.message);
     } finally {
       setEUploading(false);
     }
   };
 
   const addBoardMember = async () => {
-    if(!bForm.name||!bForm.role){ setSuc(''); showModal('Name and Role are required.', 'error'); return; }
+    if(!bForm.name||!bForm.role){ setSuc(''); alert('Name and Role are required.'); return; }
     setBSaving(true);
     try {
       await db.collection('boardMembers').add({...bForm, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
       setBForm({name:'',role:'',imageUrl:'',bio:''});
       ok('✓ Board member added!');
-    } catch(e){ showModal('Error: '+e.message, 'error'); }
+    } catch(e){ alert('Error: '+e.message); }
     setBSaving(false);
   };
-
   const delBoardMember = async (id) => {
-    showConfirm('Are you sure you want to delete this board member?', async () => {
-      await db.collection('boardMembers').doc(id).delete();
-      ok('✓ Deleted.');
-    });
+    if(!confirm('Delete this member?')) return;
+    await db.collection('boardMembers').doc(id).delete();
+    ok('✓ Deleted.');
   };
 
   const addEvent = async () => {
-    if(!eForm.title){ showModal('Event title is required.', 'error'); return; }
+    if(!eForm.title){ alert('Event title is required.'); return; }
     setESaving(true);
     try {
       await db.collection('events').add({...eForm, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
       setEForm({title:'',description:'',date:'',type:'Workshop',location:'',imageUrl:'',videoUrl:'',mediaType:'image'});
       ok('✓ Event added!');
-    } catch(e){ showModal('Error: '+e.message, 'error'); }
+    } catch(e){ alert('Error: '+e.message); }
     setESaving(false);
   };
-
   const delEvent = async (id) => {
-    showConfirm('Are you sure you want to delete this event?', async () => {
-      await db.collection('events').doc(id).delete();
-      ok('✓ Deleted.');
-    });
+    if(!confirm('Delete this event?')) return;
+    await db.collection('events').doc(id).delete();
+    ok('✓ Deleted.');
   };
 
   const saveStats = async () => {
@@ -1147,7 +1097,7 @@ function AdminPanel({ onLogout, showModal, showConfirm }){
     try {
       await db.collection('settings').doc('stats').set(stats);
       ok('✓ Stats updated!');
-    } catch(e){ showModal('Error: '+e.message, 'error'); }
+    } catch(e){ alert('Error: '+e.message); }
     setSSaving(false);
   };
 
@@ -1372,21 +1322,6 @@ function App(){
   const [events, setEvents] = useState([]);
   const [stats, setStats] = useState({founded:'2005',awards:'7+',rank:'1st',global:'Top 5%'});
 
-  // Custom Modal System (Safe inside iframes)
-  const [modalState, setModalState] = useState({ show: false, text: '', type: 'info', onConfirm: null });
-
-  const showModal = (text, type = 'info') => {
-    setModalState({ show: true, text, type, onConfirm: null });
-  };
-
-  const showConfirm = (text, onConfirm) => {
-    setModalState({ show: true, text, type: 'confirm', onConfirm });
-  };
-
-  const closeModal = () => {
-    setModalState({ show: false, text: '', type: 'info', onConfirm: null });
-  };
-
   useEffect(()=>{
     const unsub = auth.onAuthStateChanged(u=>{ setUser(u); setAuthLoading(false); });
     return ()=>unsub();
@@ -1432,6 +1367,23 @@ function App(){
     </div>
   );
 
+  if(page === 'admin'){
+    if(!user) return (
+      <>
+        <div className="cursor-dot" style={{left:curX,top:curY}}/>
+        <div className="cursor-ring" style={{left:curX,top:curY}}/>
+        <AdminLoginPage onLogin={()=>setPage('admin')}/>
+      </>
+    );
+    return (
+      <>
+        <div className="cursor-dot" style={{left:curX,top:curY}}/>
+        <div className="cursor-ring" style={{left:curX,top:curY}}/>
+        <AdminPanel onLogout={handleLogout}/>
+      </>
+    );
+  }
+
   return (
     <>
       <div className="cursor-dot" style={{left:curX,top:curY}}/>
@@ -1448,40 +1400,10 @@ function App(){
       <Nav page={page} go={go} user={user} onLogout={handleLogout} sc={sc} mob={mob} setMob={setMob}/>
 
       {/* PAGE ROUTING */}
-      {page==='home' && <HomePage go={go} stats={stats} boardMembers={boardMembers} events={events} showModal={showModal}/>}
+      {page==='home' && <HomePage go={go} stats={stats} boardMembers={boardMembers} events={events}/>}
       {page==='vision' && <VisionPage go={go} boardMembers={boardMembers}/>}
       {page==='timeline' && <TimelinePage go={go}/>}
       {page==='events' && <EventsPage go={go} events={events}/>}
-      {page==='admin' && (
-        !user 
-          ? <AdminLoginPage onLogin={()=>setPage('admin')}/>
-          : <AdminPanel onLogout={handleLogout} showModal={showModal} showConfirm={showConfirm}/>
-      )}
-
-      {/* CUSTOM REACT MODAL SYSTEM */}
-      {modalState.show && (
-        <div className="custom-modal-overlay">
-          <div className="custom-modal-box">
-            <div className="custom-modal-icon">
-              {modalState.type === 'success' ? '✅' : modalState.type === 'error' ? '❌' : modalState.type === 'confirm' ? '⚠️' : 'ℹ️'}
-            </div>
-            <div className="custom-modal-title">
-              {modalState.type === 'success' ? 'Success' : modalState.type === 'error' ? 'Error' : modalState.type === 'confirm' ? 'Confirm Action' : 'Notification'}
-            </div>
-            <div className="custom-modal-text">{modalState.text}</div>
-            <div className="custom-modal-actions">
-              {modalState.type === 'confirm' ? (
-                <>
-                  <button className="btn-outline" style={{padding: '8px 24px'}} onClick={closeModal}>Cancel</button>
-                  <button className="btn-gold" style={{padding: '8px 24px'}} onClick={() => { modalState.onConfirm(); closeModal(); }}>Yes, Delete</button>
-                </>
-              ) : (
-                <button className="btn-primary" style={{padding: '8px 24px'}} onClick={closeModal}>Okay</button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
